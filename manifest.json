@@ -1,0 +1,66 @@
+{
+  "manifest_version": 3,
+  "name": "ProSnap - Screenshot & Annotation Tool",
+  "short_name": "ProSnap",
+  "version": "1.2.0",
+  "description": "Capture, annotate, blur sensitive info, and share screenshots instantly. Features: selection tool, pen, arrow, shapes, text, highlight, blur, and more!",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "clipboardWrite",
+    "storage"
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Take Screenshot (Alt+Shift+S)",
+    "default_popup": "popup.html"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+S",
+        "mac": "Alt+Shift+S"
+      },
+      "description": "Take a screenshot"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "sandbox": {
+    "pages": ["ocr-sandbox.html"]
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'",
+    "sandbox": "sandbox allow-scripts allow-forms allow-popups allow-modals; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net blob:; child-src blob:; worker-src blob:;"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "styles.css",
+        "editor.html",
+        "editor.js",
+        "ocr-sandbox.html",
+        "features/*.js",
+        "src/**/*.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

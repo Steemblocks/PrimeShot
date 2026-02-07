@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+  <head>
+    <!-- Relaxed CSP for sandbox to allow Tesseract.js (CDN), Web Workers, and loose eval -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net blob:; worker-src blob:; child-src blob:; connect-src *; img-src * blob: data:; object-src 'none';"
+    />
+  </head>
+  <body>
+    <!-- Load Tesseract.js from CDN -->
+    <script src="https://unpkg.com/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
+    <script>
+      let pendingSource = null;
+      let pendingOrigin = null;
+
+      window.addEventListener("message", (event) => {
+        console.log("OCR Sandbox: Message received", event.data.action);
+        if (event.data.action === "ocr") {
+          pendingSource = event.source;
+          pendingOrigin = event.origin;
+          runOCR(event.data.image);
+        }
+      });
+
+      async function runOCR(image) {
+        try {
+          console.log("OCR Sandbox: Starting OCR...");
+          
+          // Initialize Tesseract worker
+          const worker = await Tesseract.createWorker("eng", 1, {
+            logger: (m) => {
+              console.log("OCR Progress:", m.status, m.progress);
+            },
+          });
+
+          const result = await worker.recognize(image);
+          console.log("OCR Sandbox: Recognition complete, found", result.data.words.length, "words");
+
+          // Extract words with bounding boxes
+          const words = result.data.words.map((w) => ({
+            text: w.text,
+            bbox: w.bbox, // {x0, y0, x1, y1}
+          }));
+
+          // Send back simple text and detailed words
+          if (pendingSource) {
+            console.log("OCR Sandbox: Sending results back...");
+            pendingSource.postMessage(
+              {
+                success: true,
+                text: result.data.text,
+                words: words,
+              },
+              pendingOrigin
+            );
+            pendingSource = null;
+            pendingOrigin = null;
+          }
+
+          await worker.terminate();
+        } catch (e) {
+          console.error("OCR Error:", e);
+          if (pendingSource) {
+            pendingSource.postMessage(
+              { success: false, error: e.toString() },
+              pendingOrigin
+            );
+            pendingSource = null;
+            pendingOrigin = null;
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

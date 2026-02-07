@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="description"
+      content="ProSnap Screenshot Tool - Capture and annotate screenshots"
+    />
+    <title>ProSnap</title>
+    <style>
+      body {
+        width: 260px;
+        margin: 0;
+        padding: 20px;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        background: #ffffff;
+        color: #1f2937;
+      }
+
+      /* Header */
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .brand img {
+        width: 24px;
+        height: 24px;
+      }
+      .brand span {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.3px;
+      }
+      .badge {
+        font-size: 10px;
+        font-weight: 600;
+        color: #6b7280;
+        background: #f3f4f6;
+        padding: 2px 8px;
+        border-radius: 99px;
+        border: 1px solid #e5e7eb;
+      }
+
+      /* Hero Button */
+      #captureBtn {
+        width: 100%;
+        border: none;
+        background: #2563eb;
+        color: white;
+        padding: 14px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.2s ease;
+        box-shadow:
+          0 4px 6px -1px rgba(37, 99, 235, 0.2),
+          0 2px 4px -1px rgba(37, 99, 235, 0.1);
+      }
+      #captureBtn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3);
+      }
+      #captureBtn:active {
+        transform: translateY(0);
+      }
+      #captureBtn svg {
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
+      }
+
+      /* Shortcuts Section */
+      .section-title {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #9ca3af;
+        margin: 24px 0 12px 2px;
+      }
+
+      .shortcut-row {
+        display: flex;
+        align-items: center;
+        padding: 8px 4px;
+        border-radius: 6px;
+        color: #374151;
+        font-size: 13px;
+        transition: background 0.1s;
+      }
+      .shortcut-row:hover {
+        background: #f9fafb;
+      }
+
+      .icon-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        margin-right: 12px;
+        color: #6b7280;
+      }
+      .icon-box svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+      }
+
+      .keys {
+        margin-left: auto;
+        display: flex;
+        gap: 4px;
+      }
+
+      kbd {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        font-weight: 500;
+        background: #fff;
+        color: #4b5563;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 0 #e5e7eb;
+        border-radius: 4px;
+        padding: 2px 6px;
+        min-width: 18px;
+        text-align: center;
+      }
+
+      /* Footer */
+      .footer {
+        margin-top: 32px;
+        text-align: center;
+        font-size: 12px;
+      }
+      .footer a {
+        color: #6b7280;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .footer a:hover {
+        color: #111827;
+      }
+
+      /* Dark Mode Support */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #202124;
+          color: #e8eaed;
+        }
+        .badge {
+          background: #3c4043;
+          color: #bdc1c6;
+          border-color: #5f6368;
+        }
+        .section-title {
+          color: #9aa0a6;
+        }
+        .shortcut-row {
+          color: #e8eaed;
+        }
+        .shortcut-row:hover {
+          background: #292a2d;
+        }
+        .icon-box {
+          color: #9aa0a6;
+        }
+        kbd {
+          background: #292a2d;
+          border-color: #5f6368;
+          color: #e8eaed;
+          box-shadow: 0 1px 0 #000;
+        }
+        .footer a {
+          color: #9aa0a6;
+        }
+        .footer a:hover {
+          color: #fff;
+        }
+        #captureBtn {
+          background: #4285f4;
+        }
+        #captureBtn:hover {
+          background: #5c97f6;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+        <img src="icons/icon48.png" alt="ProSnap Logo" />
+        <span>ProSnap</span>
+      </div>
+      <div class="badge">v1.2</div>
+    </div>
+
+    <!-- Main Action -->
+    <button id="captureBtn">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M12 15c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm7-8h-3.17L15 4H9L7.17 7H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm0 10c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2v-6h14v6z"
+        />
+      </svg>
+      <span>New Capture</span>
+    </button>
+
+    <!-- Shortcuts -->
+    <div class="section-title">Essential Shortcuts</div>
+
+    <div class="shortcut-list">
+      <div class="shortcut-row">
+        <div class="icon-box">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+            />
+          </svg>
+        </div>
+        <span>Draw</span>
+        <div class="keys"><kbd>P</kbd></div>
+      </div>
+
+      <div class="shortcut-row">
+        <div class="icon-box">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+            />
+          </svg>
+        </div>
+        <span>Shapes</span>
+        <div class="keys"><kbd>R</kbd> or <kbd>C</kbd></div>
+      </div>
+
+      <div class="shortcut-row">
+        <div class="icon-box">
+          <svg viewBox="0 0 24 24">
+            <path d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5h-9v3h3v7h3v-7h3V9z" />
+          </svg>
+        </div>
+        <span>Text</span>
+        <div class="keys"><kbd>T</kbd></div>
+      </div>
+
+      <div class="shortcut-row">
+        <div class="icon-box">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+            />
+          </svg>
+        </div>
+        <span>Undo</span>
+        <div class="keys"><kbd>Ctrl</kbd> + <kbd>Z</kbd></div>
+      </div>
+
+      <div class="shortcut-row">
+        <div class="icon-box">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"
+            />
+          </svg>
+        </div>
+        <span>Save</span>
+        <div class="keys"><kbd>Ctrl</kbd> + <kbd>S</kbd></div>
+      </div>
+
+      <div class="shortcut-row">
+        <div class="icon-box">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"
+            />
+          </svg>
+        </div>
+        <span>Copy</span>
+        <div class="keys"><kbd>Ctrl</kbd> + <kbd>C</kbd></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <a href="#" id="rateLink">Rate this extension</a>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
