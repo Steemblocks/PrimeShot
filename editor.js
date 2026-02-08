@@ -363,6 +363,20 @@ function drawCurrentAnnotation(ctx) {
   }
 }
 
+// --- Helper Functions ---
+
+/**
+ * Get canvas-relative coordinates from a mouse event
+ * Accounts for canvas position, scroll, and device pixel ratio
+ */
+function getCanvasCoords(e) {
+  const rect = elements.canvas.getBoundingClientRect();
+  return {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top,
+  };
+}
+
 // --- Events ---
 function setupEvents() {
   elements.canvas.addEventListener("mousedown", onMouseDown);
@@ -371,8 +385,9 @@ function setupEvents() {
 
   // Double-click to edit text annotations
   elements.canvas.addEventListener("dblclick", (e) => {
-    const x = e.clientX;
-    const y = e.clientY;
+    const coords = getCanvasCoords(e);
+    const x = coords.x;
+    const y = coords.y;
 
     const hit = findTextAnnotationIndex(x, y);
     if (hit !== -1) {
@@ -428,8 +443,9 @@ function setupEvents() {
 }
 
 function onMouseDown(e) {
-  const x = e.clientX;
-  const y = e.clientY;
+  const coords = getCanvasCoords(e);
+  const x = coords.x;
+  const y = coords.y;
 
   // Check resize handles first
   const handle = getResizeHandle(x, y);
@@ -559,8 +575,9 @@ function onMouseDown(e) {
 }
 
 function onMouseMove(e) {
-  const x = e.clientX;
-  const y = e.clientY;
+  const coords = getCanvasCoords(e);
+  const x = coords.x;
+  const y = coords.y;
 
   if (STATE.isResizing && STATE.selection) {
     const s = STATE.selection;
@@ -776,9 +793,11 @@ function showToolbars() {
     if (vTop < 0) vTop = gap; // Force fit top
   }
 
-  elements.toolbarVert.style.left = vLeft + "px";
-  elements.toolbarVert.style.top = vTop + "px";
+  // Final Safety Clamp
+  vLeft = Math.max(gap, Math.min(vLeft, screenW - vWidth - gap));
+  vTop = Math.max(gap, Math.min(vTop, screenH - vHeight - gap));
 
+  elements.toolbarVert.style.left = vLeft + "px";
   elements.toolbarVert.style.top = vTop + "px";
 
   // Tool buttons in grid layout
@@ -886,6 +905,10 @@ function showToolbars() {
       hTop = screenH - hHeight - gap; // Force fit bottom
     }
   }
+
+  // Final Safety Clamp
+  hLeft = Math.max(gap, Math.min(hLeft, screenW - hWidth - gap));
+  hTop = Math.max(gap, Math.min(hTop, screenH - hHeight - gap));
 
   elements.toolbarHoriz.style.left = hLeft + "px";
   elements.toolbarHoriz.style.top = hTop + "px";
@@ -1611,6 +1634,12 @@ function saveScreenshot() {
 }
 
 async function copyToClipboard() {
+  // Validate selection exists and has valid dimensions
+  if (!STATE.selection || STATE.selection.w === 0 || STATE.selection.h === 0) {
+    showToast("No selection to copy");
+    return;
+  }
+
   let cvs = getFinalCanvas();
   if (STATE.backgroundMode) {
     cvs = applyBackground(cvs);

@@ -12,6 +12,7 @@ const log = (...args) => DEBUG && console.log("[ProSnap]", ...args);
 // --- Dynamic Module Loading ---
 let STATE, CONSTANTS, ELEMENTS_CONTENT, initializeElements;
 let initToast, showToast, clipboardCopy, addStyles, TextExtractionManager;
+let isLoadingModules = false; // Flag to prevent race conditions
 
 // Initialize modules
 async function loadModules() {
@@ -106,8 +107,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   log("Message received:", request.action);
   if (request.action === "init_screenshot") {
     // Load modules if not already loaded
-    if (!STATE) {
+    if (!STATE && !isLoadingModules) {
+      isLoadingModules = true;
       loadModules().then((success) => {
+        isLoadingModules = false;
         if (success) {
           init(request.dataUrl);
           sendResponse({ success: true });
@@ -115,6 +118,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           sendResponse({ success: false, error: "Failed to load modules" });
         }
       });
+    } else if (isLoadingModules) {
+      // Modules are currently loading, wait for them
+      const checkInterval = setInterval(() => {
+        if (STATE && !isLoadingModules) {
+          clearInterval(checkInterval);
+          init(request.dataUrl);
+          sendResponse({ success: true });
+        }
+      }, 50);
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        if (!STATE) {
+          sendResponse({ success: false, error: "Module loading timeout" });
+        }
+      }, 5000);
     } else {
       init(request.dataUrl);
       sendResponse({ success: true });
@@ -227,6 +246,33 @@ function cleanup() {
   window.removeEventListener("mousemove", onMouseMove);
   window.removeEventListener("mouseup", onMouseUp);
   document.removeEventListener("keydown", onKeyDown);
+
+  // Clean up text extractor to prevent memory leaks
+  if (textExtractor) {
+    textExtractor.cleanup?.(); // Call cleanup if it exists
+    textExtractor = null;
+  }
+}
+
+// --- Helper Functions ---
+
+/**
+ * Check if a point is inside the current selection
+ */
+function isPointInSelection(x, y) {
+  if (!STATE.selection) return false;
+  const s = STATE.selection;
+  return x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h;
+}
+
+/**
+ * Get canvas-relative coordinates from a mouse event
+ * In content.js, we use viewport coordinates directly since canvas is fullscreen
+ */
+function getCanvasCoords(e) {
+  // For content.js, the canvas is fullscreen and positioned at (0,0)
+  // so clientX/Y are already canvas-relative
+  return { x: e.clientX, y: e.clientY };
 }
 
 function onMouseDown(e) {
@@ -243,7 +289,7 @@ function onMouseDown(e) {
   }
 
   // Check if Inside Selection
-  const isInside = STATE.selection && stateInSelection(e.clientX, e.clientY);
+  const isInside = STATE.selection && isPointInSelection(e.clientX, e.clientY);
 
   if (isInside) {
     if (STATE.mode === "text") {
@@ -854,6 +900,10 @@ function showToolbars() {
     if (vTop < 0) vTop = gap;
   }
 
+  // Final Safety Clamp
+  vLeft = Math.max(gap, Math.min(vLeft, window.innerWidth - vWidth - gap));
+  vTop = Math.max(gap, Math.min(vTop, window.innerHeight - vHeight - gap));
+
   elements.toolbarVert.style.left = vLeft + "px";
   elements.toolbarVert.style.top = vTop + "px";
 
@@ -997,6 +1047,10 @@ function showToolbars() {
       hTop = window.innerHeight - hHeight - gap;
     }
   }
+
+  // Final Safety Clamp
+  hLeft = Math.max(gap, Math.min(hLeft, window.innerWidth - hWidth - gap));
+  hTop = Math.max(gap, Math.min(hTop, window.innerHeight - hHeight - gap));
 
   elements.toolbarHoriz.style.left = hLeft + "px";
   elements.toolbarHoriz.style.top = hTop + "px";
@@ -1212,6 +1266,16 @@ function printScreenshot() {
 // Wrapper for screenshot copying (screenshot-specific, not text copying)
 async function copyScreenshot() {
   try {
+    // Validate selection exists and has valid dimensions
+    if (
+      !STATE.selection ||
+      STATE.selection.w === 0 ||
+      STATE.selection.h === 0
+    ) {
+      showToast("No selection to copy");
+      return;
+    }
+
     const cvs = getFinalCanvas();
     const blob = await new Promise((resolve, reject) => {
       cvs.toBlob((b) => {
@@ -1279,10 +1343,4 @@ function getResizeHandle(mx, my) {
     }
   }
   return null;
-}
-
-function stateInSelection(x, y) {
-  if (!STATE.selection) return false;
-  const s = STATE.selection;
-  return x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h;
 }
