@@ -1,4 +1,7 @@
 {
+  "name": "prosnap",
+  "version": "1.2.0",
+  "description": "ProSnap Screenshot & Annotation Tool",
   "devDependencies": {
     "sharp": "^0.34.5"
   }
