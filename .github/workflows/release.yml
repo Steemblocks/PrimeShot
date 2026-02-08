@@ -1,0 +1,28 @@
+name: Release Extension
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create ZIP file
+        run: |
+          zip -r prosnap-extension.zip . -x "*.git*" "*.github*" "node_modules/*" "*.DS_Store" "package-lock.json" "package.json" "convert-icons.js" "README.md"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: prosnap-extension.zip
+          generate_release_notes: true
