@@ -3,7 +3,7 @@
   "name": "ProSnap - Screenshot & Annotation Tool",
   "short_name": "ProSnap",
   "version": "1.2.0",
-  "description": "Capture, annotate, blur & share screenshots. Includes tools: selection, pen, shapes, blur, highlight & more.",
+  "description": "Capture, annotate, blur, and share screenshots with powerful built-in tools.",
   "permissions": [
     "activeTab",
     "scripting",
